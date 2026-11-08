@@ -413,7 +413,7 @@
     }
 
     let enLaNebulosa = false;
-    let ultimaPosicionGaleria = { x: -3.5, y: 2.05, z: 2.4 };
+    let ultimaPosicionGaleria = { x: -2.8, y: 2.05, z: 1.5 };
 
     function alternarNebulosa() {
       const cameraRig = document.querySelector('#rig');
@@ -434,8 +434,8 @@
       }
     }
 
-    // BASE DE DATOS DE OBRAS VINCULADA POR NOMBRE DE COLECCIÓN O PLANO EN BLENDER
-    const BASE_DATOS_OBRAS = {
+    // BASE DE DATOS DE OBRAS VINCULADA A LOS NOMBRES DE LAS COLECCIONES EN BLENDER
+    const MAPA_OBRAS = {
       'Al compás de la esclavitud digital': {
         titulo: 'Al compás de la esclavitud digital (76 × 56 cm)',
         meta: 'Artista: Violeta Michelle Cortez Surio | Crítica Social',
@@ -569,7 +569,7 @@
       }
     };
 
-    // COMPONENTE INTELIGENTE: VINCULA PLANOS DE BLENDER BUSCANDO POR NOMBRE DE PADRE O DE OBJETO
+    // COMPONENTE ROBUSTO: RASTREA LA JERARQUÍA DE BLENDER PARA ASIGNAR TEXTURAS Y CLICS CORRECTAMENTE
     AFRAME.registerComponent('integrador-obras-blender', {
       init: function () {
         this.el.addEventListener('model-loaded', () => {
@@ -579,31 +579,29 @@
           obj3D.traverse((child) => {
             if (!child.isMesh) return;
 
-            // Revisamos el nombre del hijo (plano) o de su padre directo en el árbol de Blender
-            let nombreObra = '';
-            let actual = child;
-            while (actual && actual !== obj3D) {
-              const nombreLimpio = actual.name.trim();
-              if (BASE_DATOS_OBRAS[nombreLimpio]) {
-                nombreObra = nombreLimpio;
+            // Buscamos hacia arriba en el nombre de los padres o colecciones contenedoras en Blender
+            let nombreObraEncontrada = '';
+            let nodoActual = child;
+            while (nodoActual && nodoActual !== obj3D) {
+              const nombreLimpio = nodoActual.name.trim();
+              if (MAPA_OBRAS[nombreLimpio]) {
+                nombreObraEncontrada = nombreLimpio;
                 break;
               }
-              actual = actual.parent;
+              nodoActual = nodoActual.parent;
             }
 
-            // Si no se encontró por jerarquía, probamos directo con el nombre de la malla
-            if (!nombreObra && BASE_DATOS_OBRAS[child.name.trim()]) {
-              nombreObra = child.name.trim();
-            }
-
-            const datosObra = BASE_DATOS_OBRAS[nombreObra];
+            const datosObra = MAPA_OBRAS[nombreObraEncontrada];
             if (datosObra && datosObra.img) {
               const urlCORS = 'https://images.weserv.nl/?url=' + encodeURIComponent(datosObra.img);
               const loader = new THREE.TextureLoader();
               loader.setCrossOrigin('anonymous');
               loader.load(urlCORS, (tex) => {
                 tex.colorSpace = THREE.SRGBColorSpace;
-                // DoubleSide y optimización para corregir inversiones de espejo
+                // Corrección automática de orientación (espejo/inversión) para que ninguna imagen salga al revés
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.repeat.x = -1;
+                
                 child.material = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
                 child.material.needsUpdate = true;
               });
@@ -613,7 +611,7 @@
           });
         });
 
-        // Evento global de clic optimizado para las mallas texturizadas
+        // Evento de clic global optimizado para abrir la ficha técnica
         window.addEventListener('click', (e) => {
           const mouse = new THREE.Vector2(
             (e.clientX / window.innerWidth) * 2 - 1,
@@ -631,7 +629,6 @@
               let hit = intersects[0].object;
               let info = hit.userData.obraInfo;
 
-              // Si el objeto tocado pertenece a una jerarquía con datos de obra
               if (!info) {
                 let curr = hit;
                 while (curr && !info) {
@@ -714,13 +711,13 @@
     <button id="btn-toggle-nebulosa" onclick="alternarNebulosa()">✨ Salir a las estrellas</button>
   </div>
 
-  <!-- ESCENA DE A-FRAME CON ILUMINACIÓN REALISTA Y AJUSTADA -->
+  <!-- ESCENA DE A-FRAME CON ILUMINACIÓN SUAVE Y REALISTA -->
   <a-scene 
     video-handler
     loading-screen="enabled: false;"
     cursor="rayOrigin: mouse;"
     raycaster="objects: .clickable;"
-    renderer="logarithmicDepthBuffer: true; colorManagement: true; exposure: 1.1; toneMapping: ACESFilmic;">
+    renderer="logarithmicDepthBuffer: true; colorManagement: true; exposure: 1.0; toneMapping: ACESFilmic;">
 
     <a-assets timeout="100">
       <a-asset-item id="modelo-galeria" src="galeria_nueva.glb"></a-asset-item>
@@ -730,11 +727,11 @@
     <!-- FONDO DE VIDEO CÓSMICO (FONDO DE LA GALERÍA) -->
     <a-videosphere src="#video-nebulosa" rotation="0 -90 0"></a-videosphere>
 
-    <!-- ILUMINACIÓN REALISTA Y BALANCEADA -->
-    <a-entity light="type: ambient; color: #ffffff; intensity: 0.6;"></a-entity>
-    <a-entity light="type: directional; color: #fff1d6; intensity: 1.1;" position="0 15 10"></a-entity>
+    <!-- ILUMINACIÓN BALANCEADA Y SUAVE -->
+    <a-entity light="type: ambient; color: #ffffff; intensity: 0.35;"></a-entity>
+    <a-entity light="type: directional; color: #fff1d6; intensity: 0.7;" position="0 15 10"></a-entity>
 
-    <!-- MODELO 3D DE LA GALERÍA COMPLETA (VINCULADO A LOS PLANOS) -->
+    <!-- MODELO 3D DE LA GALERÍA COMPLETA -->
     <a-entity gltf-model="#modelo-galeria" position="0 0 0" integrador-obras-blender></a-entity>
 
 
@@ -743,8 +740,8 @@
     <!-- ========================================================= -->
     <a-entity id="rig" 
               movement-controls="controls: keyboard; speed: 0.35;" 
-              position="-3.5 2.05 2.4" 
-              rotation="0 -90 0">
+              position="-2.8 2.05 1.5" 
+              rotation="0 -45 0">
       <a-camera position="0 0 0" 
                 wasd-controls="enabled: false;" 
                 look-controls="pointerLockEnabled: false; touchEnabled: true;">
