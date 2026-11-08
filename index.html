@@ -365,7 +365,7 @@
 
     function abrirModalObra(titulo, meta, desc, link) {
       document.getElementById('artwork-modal-title').textContent = titulo || 'Obra';
-      document.getElementById('artwork-modal-meta').textContent = meta || 'Creative Art Violeta';
+      document.getElementById('artwork-modal-meta').textContent = meta || 'Violeta Michelle Cortez Surio';
       document.getElementById('artwork-modal-desc').textContent = desc || 'Descripción disponible próximamente.';
       const btnLink = document.getElementById('artwork-modal-link');
       btnLink.href = link || 'https://galerianebulosa.com/obras-destacadas/';
@@ -434,78 +434,202 @@
       }
     }
 
-    // COMPONENTE PARA ROTACIÓN AL HACER CLIC EN ESCULTURAS
-    AFRAME.registerComponent('escultura-interactiva', {
-      schema: {
-        titulo: {type: 'string', default: ''},
-        meta: {type: 'string', default: ''},
-        desc: {type: 'string', default: ''},
-        link: {type: 'string', default: ''}
+    // BASE DE DATOS DE OBRAS VINCULADA POR NOMBRE DE OBJETO EN BLENDER
+    const BASE_DATOS_OBRAS = {
+      'Al compás de la esclavitud digital': {
+        titulo: 'Al compás de la esclavitud digital (76 × 56 cm)',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Crítica Social',
+        desc: 'Una bailarina encadenada sonríe forzadamente ante una pantalla sosteniendo «Yo elegí esto». Denuncia contra el secuestro de la atención humana.',
+        img: 'https://galerianebulosa.com/wp-content/uploads/2025/09/VioletaMichelleCortezSurio_ToTheRhythmOfDigitalSlavery.jpg',
+        link: 'https://galerianebulosa.com/la-trampa-del-algoritmo-como-la-tirania-digital-destruye-la-identidad-y-la-economia/'
       },
-      init: function () {
-        let el = this.el;
-        let girando = false;
-        el.classList.add('clickable');
-
-        el.addEventListener('click', (e) => {
-          e.stopPropagation();
-          if (!girando) {
-            el.setAttribute('animation', {
-              property: 'rotation',
-              to: '0 360 0',
-              dur: 8000,
-              easing: 'linear',
-              loop: true
-            });
-            girando = true;
-          } else {
-            el.removeAttribute('animation');
-            girando = false;
-          }
-          abrirModalObra(this.data.titulo, this.data.meta, this.data.desc, this.data.link);
-        });
-      }
-    });
-
-    AFRAME.registerComponent('obra-interactiva', {
-      schema: {
-        titulo: { type: 'string', default: '' },
-        meta: { type: 'string', default: '' },
-        desc: { type: 'string', default: '' },
-        link: { type: 'string', default: 'https://galerianebulosa.com/obras-destacadas/' }
+      'Alas de renacimiento': {
+        titulo: 'Alas de renacimiento (40.5 × 30.5 cm)',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Superación Personal',
+        desc: 'Una golondrina rompe eslabones pesados mientras peces alados celebran en el cielo. Alegoría sobre sanar y recuperar la identidad.',
+        img: 'https://galerianebulosa.com/wp-content/uploads/2025/09/VioletaMichelleCortezSurio_WingsOfRebirth-1.jpg',
+        link: 'https://galerianebulosa.com/galerianebulosa-com-romper-cadenas-invisibles-el-coraje-de-soltar-relaciones-toxicas-y-renacer/'
       },
-      init: function () {
-        const el = this.el;
-        const data = this.data;
-        const vincular = (target) => {
-          target.classList.add('clickable');
-          target.addEventListener('click', (e) => {
-            e.stopPropagation();
-            abrirModalObra(data.titulo, data.meta, data.desc, data.link);
-          });
-        };
-        vincular(el);
-        el.querySelectorAll('a-plane, a-box').forEach(vincular);
+      'Bodegón hecho con carboncillo sin firma': {
+        titulo: 'Bodegón a carboncillo',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Dibujo Académico',
+        desc: 'Estudio de claroscuro, luces y formas volumétricas realizado en técnica clásica de carboncillo sobre papel.',
+        img: 'https://galerianebulosa.com/wp-content/uploads/2026/09/Bodegon-hecho-con-carboncillo-sin-firma-scaled.jpg',
+        link: 'https://galerianebulosa.com/obras-destacadas/'
+      },
+      'Bodegón y muñeca': {
+        titulo: 'Bodegón y muñeca',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Composición & Color',
+        desc: 'Composición clásica donde la textura y expresión de la figura central dialogan con el entorno y el bodegón.',
+        img: 'https://galerianebulosa.com/wp-content/uploads/2026/09/Bodegon-y-muneca-copia.png',
+        link: 'https://galerianebulosa.com/obras-destacadas/'
+      },
+      'Burbuja rota El despertar del fénix': {
+        titulo: 'Burbuja rota – El despertar del fénix (61 × 45.5 cm)',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Crecimiento Interior',
+        desc: 'Una criatura de fuego revienta la membrana de creencias limitantes y miedos autoimpuestos para expandirse hacia su verdadera dimensión.',
+        img: 'https://galerianebulosa.com/wp-content/uploads/2026/09/Burbuja-rota-El-despertar-del-fenix-scaled.jpg',
+        link: 'https://galerianebulosa.com/el-despertar-del-fenix-como-reventar-la-zona-de-confort-que-te-mantiene-atrapado/'
+      },
+      'Cuadro salvadoreño': {
+        titulo: 'Obra de arte de El Salvador (50 × 34.6 cm)',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Pintado con café salvadoreño',
+        desc: 'Pigmentos extraídos del grano de café de altura integrando al Mágico González, El Cipitío y los volcanes en una oda viva.',
+        img: 'https://galerianebulosa.com/wp-content/uploads/2026/09/Cuadro-salvadoreno.png',
+        link: 'https://galerianebulosa.com/entre-la-magia-y-el-cafe-magico-gonzalez-el-cipitio-y-la-esencia-de-nuestra-tierra/'
+      },
+      'Desnúdate el alma': {
+        titulo: 'Desnúdate el alma',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Autoconocimiento',
+        desc: 'Nacida a partir de un poema fundacional de la artista, la figura femenina que flota despoja máscaras y ataduras del ego.',
+        img: 'https://galerianebulosa.com/wp-content/uploads/2026/09/VioletaMichelleCortezSurio_UndressTheSoul.png',
+        link: 'https://galerianebulosa.com/desnudarse-el-alma-el-dificil-arte-de-vivir-sin-falsas-apariencias-ni-corazas/'
+      },
+      'Ecos en el tiempo': {
+        titulo: 'Ecos en el tiempo (60 × 80 cm)',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Nostalgia & Cosmos',
+        desc: 'Un reloj fragmentado y una entidad tecnológica confrontan la relatividad temporal: cómo los anhelos y recuerdos dilatan o congelan la vida.',
+        img: 'https://galerianebulosa.com/wp-content/uploads/2026/09/Ecos-en-el-tiempo_Violeta-Michelle-Cortez-Surio.png',
+        link: 'https://galerianebulosa.com/ecos-en-el-tiempo-por-que-el-pasado-y-el-futuro-conviven-en-tus-recuerdos/'
+      },
+      'El aliento del mar': {
+        titulo: 'El aliento del mar (Poseidón)',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Sanguina & Sepia',
+        desc: 'Lápices de sanguina, sepia y tiza blanca capturando la mirada indomable del soberano de los océanos.',
+        img: 'http://galerianebulosa.com/wp-content/uploads/2026/09/El-aliento-del-mar-1.jpg',
+        link: 'https://galerianebulosa.com/que-oculta-la-mirada-de-poseidon-el-secreto-mitologico-detras-de-este-dibujo-en-sepia-y-sanguina/'
+      },
+      'El juicio del dragón azul': {
+        titulo: 'El juicio del dragón azul (60 × 80 cm)',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Conciencia Cósmica',
+        desc: 'Un dragón celestial es observado por los animales del bosque. Alegoría sobre la desconexión humana con lo salvaje y la crisis ecológica.',
+        img: 'https://galerianebulosa.com/wp-content/uploads/2025/09/VioletaMichelleCortezSurio_TheJudgmentOfTheBlueDragon.png',
+        link: 'https://galerianebulosa.com/el-juicio-del-dragon-azul-estamos-en-guerra-con-las-fuerzas-naturales-que-nos-sustentan/'
+      },
+      'El precio del fuego': {
+        titulo: 'El precio del fuego (70 × 50 cm)',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Filosofía & Resistencia',
+        desc: 'A través del mito de Prometeo encadenado y una marea de calaveras anónimas, esta obra reflexiona sobre el costo de desafiar las estructuras de control.',
+        img: 'https://galerianebulosa.com/wp-content/uploads/2026/09/VioletaMichelleCortezSurio_ThePriceOfFire.jpg',
+        link: 'https://galerianebulosa.com/el-precio-de-la-verdad-por-que-incomoda-tanto-quien-decide-pensar-por-si-mismo/'
+      },
+      'El relicario de la memoria y la voz': {
+        titulo: 'El Relicario de la memoria y la voz',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Identidad Cuscatleca',
+        desc: 'Una mujer indígena con los labios descosidos recupera la voz silenciada por siglos. Porta un relicario de dos caras con Joya de Cerén.',
+        img: 'http://galerianebulosa.com/wp-content/uploads/2026/09/VioletaMichelleCortezSurio_ElRelicarioDeLaMemoriaYLaVoz-scaled.jpg',
+        link: 'https://galerianebulosa.com/raices-indigenas-el-salvador-joya-de-ceren/'
+      },
+      'El retrato del poder': {
+        titulo: 'El retrato del poder',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Sociología & Dinero',
+        desc: 'Entre lingotes de oro y billetes flotantes, expone la soledad de las oligarquías y la ceguera emocional frente a las realidades del entorno.',
+        img: 'https://galerianebulosa.com/wp-content/uploads/2026/09/El-retrato-del-poder.png',
+        link: 'https://galerianebulosa.com/el-vacio-de-la-opulencia-cuando-el-dinero-compra-privilegios-pero-apaga-la-empatia/'
+      },
+      'Escultura de piedra': {
+        titulo: 'Escultura de Piedra 3D',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Escultura Digital 3D',
+        desc: 'Pieza escultórica modelada en Blender, explorando el peso, el volumen orgánico y la textura de la piedra tratada.',
+        isSculpture: true,
+        link: 'https://galerianebulosa.com/obras-destacadas/'
+      },
+      'Escultura torso de mujer': {
+        titulo: 'Torso Esculpido de Mujer',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Escultura & Anatomía 3D',
+        desc: 'Pieza escultórica anatómica moldeada en Blender, inspirada en la estatuaria clásica con acabado mate estilizado.',
+        isSculpture: true,
+        link: 'https://galerianebulosa.com/obras-destacadas/'
+      },
+      'Fragmentos de una era rota': {
+        titulo: 'Fragmentos de una era rota (Premio Museo MARTE)',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Ganadora Museo MARTE',
+        desc: 'Ganadora del Museo MARTE. Da voz a las memorias silenciadas y sitúa en un niño que lee la única fuerza capaz de frenar el ciclo de violencia.',
+        img: 'https://galerianebulosa.com/wp-content/uploads/2025/09/VioletaMichelleCortezSurio_FragmentsOfAShatteredEra.jpg',
+        link: 'https://galerianebulosa.com/cicatrices-conflicto-armado-el-salvador-educacion/'
+      },
+      'Guardián de la patria': {
+        titulo: 'Guardián de la patria (40.5 × 30.5 cm)',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Alegoría Nacional',
+        desc: 'El ave Torogoz surca los cielos con el lazo azul y blanco junto al monumento del Salvador del Mundo. Visión de naturaleza, fe y patria.',
+        img: 'https://galerianebulosa.com/wp-content/uploads/2026/09/Guardian-de-la-patria-scaled.png',
+        link: 'https://galerianebulosa.com/el-vuelo-del-torogoz-fe-libertad-y-el-renacer-de-la-esperanza-en-el-salvador/'
+      },
+      'retrato-peter': {
+        titulo: 'Retrato de Peter',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Retrato de Mascota',
+        desc: 'Estudio de retrato detallado dedicado a mi amado gato Peter, destacando la nitidez de su mirada y el pelaje suave.',
+        img: 'https://galerianebulosa.com/wp-content/uploads/2026/11/retrato-peter.png',
+        link: 'https://galerianebulosa.com/obras-destacadas/'
+      },
+      'Umbral de esperanza': {
+        titulo: 'Umbral de esperanza (60 × 80 cm)',
+        meta: 'Artista: Violeta Michelle Cortez Surio | Existencialismo & Cosmos',
+        desc: 'La figura en traje formal contrasta con las nebulosas infinitas. Un dilema entre la rutina y cultivar sueños que trasciendan el tiempo.',
+        img: 'https://galerianebulosa.com/wp-content/uploads/2026/09/Umbral-de-esperanza.png',
+        link: 'https://galerianebulosa.com/que-legado-dejamos-frente-a-la-inmensidad-del-cosmos/'
       }
-    });
+    };
 
-    AFRAME.registerComponent('lienzo-obra', {
-      schema: { src: { type: 'string', default: '' } },
+    // COMPONENTE INTELIGENTE: ASIGNA AUTOMÁTICAMENTE TEXTURAS Y CLICS A LOS PLANOS DE BLENDER
+    AFRAME.registerComponent('integrador-obras-blender', {
       init: function () {
-        const el = this.el;
-        if (this.data.src) {
-          let urlCORS = 'https://images.weserv.nl/?url=' + encodeURIComponent(this.data.src);
-          const loader = new THREE.TextureLoader();
-          loader.setCrossOrigin('anonymous');
-          loader.load(urlCORS, (tex) => {
-            tex.colorSpace = THREE.SRGBColorSpace;
-            const mesh = el.getObject3D('mesh');
-            if (mesh) {
-              mesh.material = new THREE.MeshBasicMaterial({ map: tex, side: THREE.FrontSide });
-              mesh.material.needsUpdate = true;
+        this.el.addEventListener('model-loaded', () => {
+          const obj3D = this.el.getObject3D('mesh');
+          if (!obj3D) return;
+
+          obj3D.traverse((child) => {
+            if (!child.isMesh) return;
+
+            const nombreMesh = child.name.trim();
+            const datosObra = BASE_DATOS_OBRAS[nombreMesh];
+
+            if (datosObra) {
+              child.el = this.el;
+              
+              // Si tiene imagen, le aplicamos la textura de WordPress directamente al plano 3D de Blender
+              if (datosObra.img) {
+                const urlCORS = 'https://images.weserv.nl/?url=' + encodeURIComponent(datosObra.img);
+                const loader = new THREE.TextureLoader();
+                loader.setCrossOrigin('anonymous');
+                loader.load(urlCORS, (tex) => {
+                  tex.colorSpace = THREE.SRGBColorSpace;
+                  child.material = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
+                  child.material.needsUpdate = true;
+                });
+              }
+
+              // Asignar interactividad de raycast y clic al tocar la malla de Blender
+              child.userData.clickable = true;
             }
           });
-        }
+        });
+
+        // Evento global de clic sobre mallas dentro del modelo GLB
+        window.addEventListener('click', (e) => {
+          const mouse = new THREE.Vector2(
+            (e.clientX / window.innerWidth) * 2 - 1,
+            -(e.clientY / window.innerHeight) * 2 + 1
+          );
+          const camera = document.querySelector('a-camera').getObject3D('camera');
+          const scene3D = this.el.getObject3D('mesh');
+
+          if (camera && scene3D) {
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene3D.children, true);
+
+            if (intersects.length > 0) {
+              const hit = intersects[0].object;
+              const nombreHit = hit.name.trim();
+              const datosObra = BASE_DATOS_OBRAS[nombreHit];
+
+              if (datosObra) {
+                abrirModalObra(datosObra.titulo, datosObra.meta, datosObra.desc, datosObra.link);
+              }
+            }
+          }
+        });
       }
     });
 
@@ -592,8 +716,8 @@
     <a-entity light="type: ambient; color: #ffffff; intensity: 1.2;"></a-entity>
     <a-entity light="type: directional; color: #fff1d6; intensity: 1.5;" position="0 15 10"></a-entity>
 
-    <!-- MODELO 3D DE LA GALERÍA COMPLETA -->
-    <a-entity gltf-model="#modelo-galeria" position="0 0 0"></a-entity>
+    <!-- MODELO 3D DE LA GALERÍA COMPLETA (VINCULADO AUTOMÁTICAMENTE A LOS PLANOS DE BLENDER) -->
+    <a-entity gltf-model="#modelo-galeria" position="0 0 0" integrador-obras-blender></a-entity>
 
 
     <!-- ========================================================= -->
