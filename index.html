@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galería 3D - Creative Art Violeta | Galería Nebulosa</title>
+  
+  <!-- Tipografía Oficial Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- A-Frame & Extras -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.2.0/dist/aframe-extras.min.js"></script>
+
+  <style>
+    * {
+      font-family: 'Poppins', sans-serif !important;
+      box-sizing: border-box;
+    }
+
+    html, body, canvas.a-canvas, a-scene {
+      cursor: grab !important;
+      cursor: -webkit-grab !important;
+      user-select: none;
+    }
+    body:active, canvas.a-canvas:active, a-scene:active {
+      cursor: grabbing !important;
+      cursor: -webkit-grabbing !important;
+    }
+
+    /* MODAL DE INFORMACIÓN DE OBRA Y REFLEXIÓN */
+    #artwork-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 8, 18, 0.75);
+      backdrop-filter: blur(10px);
+      z-index: 10000000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    #artwork-modal {
+      background: linear-gradient(145deg, rgba(28, 20, 48, 0.96), rgba(16, 12, 28, 0.96));
+      border: 1.5px solid rgba(192, 132, 252, 0.4);
+      border-radius: 22px;
+      padding: 28px 24px 24px;
+      max-width: 480px;
+      width: 100%;
+      color: #ffffff;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(168, 85, 247, 0.3);
+      position: relative;
+      animation: modalFadeIn 0.22s ease-out;
+      user-select: text;
+      cursor: default;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.92) translateY(12px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    #artwork-modal-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      color: #e9d5ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    #artwork-modal-close:hover {
+      background: rgba(239, 68, 68, 0.4);
+      color: #ffffff;
+      border-color: #ef4444;
+    }
+    #artwork-modal-badge {
+      display: inline-block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #c084fc;
+      background: rgba(192, 132, 252, 0.15);
+      border: 1px solid rgba(192, 132, 252, 0.3);
+      border-radius: 12px;
+      padding: 3px 10px;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+    #artwork-modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 6px 0;
+      color: #ffffff;
+      line-height: 1.3;
+    }
+    #artwork-modal-meta {
+      font-size: 12px;
+      font-weight: 600;
+      color: #e024c3;
+      margin-bottom: 12px;
+      display: block;
+    }
+    #artwork-modal-desc {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #d8b4fe;
+      margin: 0 0 20px 0;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    #artwork-modal-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      box-sizing: border-box;
+      background: linear-gradient(135deg, #e024c3 0%, #9333ea 100%);
+      color: #ffffff;
+      text-decoration: none;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      transition: all 0.2s ease;
+      box-shadow: 0 6px 18px rgba(224, 36, 195, 0.4);
+    }
+    #artwork-modal-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(224, 36, 195, 0.6);
+    }
+
+    /* REPRODUCTOR DE VIDEO YOUTUBE FLOTANTE */
+    #video-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 6, 16, 0.88);
+      backdrop-filter: blur(12px);
+      z-index: 10000001;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    #video-modal-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 860px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    #video-modal-close {
+      position: relative;
+      background: rgba(28, 20, 48, 0.95);
+      border: 1.5px solid rgba(192, 132, 252, 0.6);
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), 0 0 15px rgba(168, 85, 247, 0.5);
+      transition: all 0.15s ease;
+      z-index: 10000003;
+    }
+    #video-modal-close:hover {
+      background: #ef4444;
+      border-color: #ef4444;
+      transform: scale(1.1);
+    }
+    #video-modal-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000000;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1.5px solid rgba(192, 132, 252, 0.45);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+    }
+    #video-modal-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    /* GUÍA DE NAVEGACIÓN Y MENÚ EN PANTALLA */
+    #nav-guide {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      right: 20px;
+      background: rgba(14, 14, 20, 0.92);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 16px;
+      padding: 16px 14px;
+      color: #ffffff;
+      z-index: 9999999 !important;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      user-select: none;
+      cursor: default !important;
+      transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s ease;
+    }
+    #nav-guide.minimized {
+      transform: translateY(-50%) translateX(calc(100% + 35px));
+      opacity: 0.95;
+    }
+    #btn-toggle-nav-guide {
+      position: absolute;
+      top: 50%;
+      left: -28px;
+      transform: translateY(-50%);
+      width: 26px;
+      height: 48px;
+      background: linear-gradient(135deg, rgba(30, 20, 50, 0.95), rgba(20, 14, 35, 0.95));
+      border: 1px solid rgba(192, 132, 252, 0.45);
+      border-right: none;
+      border-radius: 10px 0 0 10px;
+      color: #c084fc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer !important;
+      font-size: 11px;
+      box-shadow: -4px 4px 14px rgba(0, 0, 0, 0.5);
+      transition: all 0.25s ease;
+      z-index: 10000000;
+      padding: 0;
+    }
+    #btn-toggle-nav-guide:hover {
+      background: rgba(168, 85, 247, 0.85);
+      color: #ffffff;
+      width: 29px;
+      left: -31px;
+    }
+    .guide-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #9c9cb8;
+      font-weight: 700;
+    }
+    .arrow-pad {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .arrow-row {
+      display: flex;
+      gap: 5px;
+    }
+    .key-cap {
+      width: 34px;
+      height: 34px;
+      background: #252535;
+      border: 1px solid #404058;
+      border-bottom: 3px solid #161622;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 600;
+      color: #f5f5fa;
+      cursor: pointer !important;
+      transition: all 0.1s ease;
+      touch-action: manipulation;
+    }
+    .key-cap:hover { background: #3b3b54; border-color: #6366f1; }
+    .key-cap:active { transform: translateY(2px); border-bottom-width: 1px; }
+
+    .guide-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 11px;
+      text-align: center;
+      color: #dcdcfa;
+      gap: 5px;
+    }
+    .mouse-icon {
+      width: 22px;
+      height: 30px;
+      border: 2px solid #ffffff;
+      border-radius: 13px;
+      position: relative;
+    }
+    .mouse-icon::after {
+      content: '';
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 7px;
+      background: #ffffff;
+      border-radius: 2px;
+    }
+    #btn-toggle-nebulosa {
+      width: 100%;
+      box-sizing: border-box;
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer !important;
+      box-shadow: 0 4px 14px rgba(124, 58, 237, 0.45);
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+    #btn-toggle-nebulosa:hover { transform: scale(1.03); }
+    #btn-toggle-nebulosa.afuera {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.5);
+    }
+  </style>
+
+  <script>
+    function alternarNavGuide() {
+      const panel = document.getElementById('nav-guide');
+      const btn = document.getElementById('btn-toggle-nav-guide');
+      if (!panel || !btn) return;
+      panel.classList.toggle('minimized');
+      const minimizado = panel.classList.contains('minimized');
+      btn.innerHTML = minimizado ? '◀' : '▶';
+    }
+
+    function abrirModalObra(titulo, meta, desc, link) {
+      document.getElementById('artwork-modal-title').textContent = titulo || 'Obra';
+      document.getElementById('artwork-modal-meta').textContent = meta || 'Creative Art Violeta';
+      document.getElementById('artwork-modal-desc').textContent = desc || 'Descripción disponible próximamente.';
+      const btnLink = document.getElementById('artwork-modal-link');
+      btnLink.href = link || 'https://galerianebulosa.com/obras-destacadas/';
+      document.getElementById('artwork-modal-overlay').style.display = 'flex';
+    }
+
+    function cerrarModalObra() {
+      document.getElementById('artwork-modal-overlay').style.display = 'none';
+    }
+
+    function abrirModalVideo(videoId) {
+      const iframe = document.getElementById('youtube-player-frame');
+      iframe.src = `https://www.youtube.com/embed/${videoId || 'GZRF6dSq7tk'}?autoplay=1&rel=0`;
+      document.getElementById('video-modal-overlay').style.display = 'flex';
+    }
+
+    function cerrarModalVideo() {
+      document.getElementById('youtube-player-frame').src = '';
+      document.getElementById('video-modal-overlay').style.display = 'none';
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        cerrarModalVideo();
+        cerrarModalObra();
+      }
+    });
+
+    function moverConBoton(tecla) {
+      const cameraRig = document.querySelector('#rig');
+      const cameraEl = document.querySelector('a-camera');
+      if (cameraRig && cameraEl && cameraEl.object3D) {
+        const dir = new THREE.Vector3();
+        cameraEl.object3D.getWorldDirection(dir);
+        dir.y = 0; dir.normalize();
+        const paso = 0.8;
+        let dx = 0, dz = 0;
+        if (tecla === 'ArrowUp') { dx = -dir.x * paso; dz = -dir.z * paso; }
+        else if (tecla === 'ArrowDown') { dx = dir.x * paso; dz = dir.z * paso; }
+        else if (tecla === 'ArrowLeft') { dx = -dir.z * paso; dz = dir.x * paso; }
+        else if (tecla === 'ArrowRight') { dx = dir.z * paso; dz = -dir.x * paso; }
+        const p = cameraRig.getAttribute('position');
+        cameraRig.setAttribute('position', { x: p.x + dx, y: p.y, z: p.z + dz });
+      }
+    }
+
+    let enLaNebulosa = false;
+    let ultimaPosicionGaleria = { x: -14.421, y: 2.05, z: 0.613 };
+
+    function alternarNebulosa() {
+      const cameraRig = document.querySelector('#rig');
+      const btn = document.getElementById('btn-toggle-nebulosa');
+      if (!cameraRig || !btn) return;
+      if (!enLaNebulosa) {
+        const posActual = cameraRig.getAttribute('position');
+        ultimaPosicionGaleria = { x: posActual.x, y: posActual.y, z: posActual.z };
+        cameraRig.setAttribute('position', { x: 0, y: 15.0, z: 22.0 });
+        enLaNebulosa = true;
+        btn.textContent = '🏛️ Volver a la Galería';
+        btn.classList.add('afuera');
+      } else {
+        cameraRig.setAttribute('position', ultimaPosicionGaleria);
+        enLaNebulosa = false;
+        btn.textContent = '🌌 Salir a la Nebulosa';
+        btn.classList.remove('afuera');
+      }
+    }
+
+    // COMPONENTE PARA ROTACIÓN AL HACER CLIC EN ESCULTURAS
+    AFRAME.registerComponent('escultura-interactiva', {
+      schema: {
+        titulo: {type: 'string', default: ''},
+        meta: {type: 'string', default: ''},
+        desc: {type: 'string', default: ''},
+        link: {type: 'string', default: ''}
+      },
+      init: function () {
+        let el = this.el;
+        let girando = false;
+        el.classList.add('clickable');
+
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (!girando) {
+            el.setAttribute('animation', {
+              property: 'rotation',
+              to: '0 360 0',
+              dur: 8000,
+              easing: 'linear',
+              loop: true
+            });
+            girando = true;
+          } else {
+            el.removeAttribute('animation');
+            girando = false;
+          }
+          abrirModalObra(this.data.titulo, this.data.meta, this.data.desc, this.data.link);
+        });
+      }
+    });
+
+    AFRAME.registerComponent('obra-interactiva', {
+      schema: {
+        titulo: { type: 'string', default: '' },
+        meta: { type: 'string', default: '' },
+        desc: { type: 'string', default: '' },
+        link: { type: 'string', default: 'https://galerianebulosa.com/obras-destacadas/' }
+      },
+      init: function () {
+        const el = this.el;
+        const data = this.data;
+        const vincular = (target) => {
+          target.classList.add('clickable');
+          target.addEventListener('click', (e) => {
+            e.stopPropagation();
+            abrirModalObra(data.titulo, data.meta, data.desc, data.link);
+          });
+        };
+        vincular(el);
+        el.querySelectorAll('a-plane, a-box').forEach(vincular);
+      }
+    });
+
+    AFRAME.registerComponent('lienzo-obra', {
+      schema: { src: { type: 'string', default: '' } },
+      init: function () {
+        const el = this.el;
+        if (this.data.src) {
+          let urlCORS = 'https://images.weserv.nl/?url=' + encodeURIComponent(this.data.src);
+          const loader = new THREE.TextureLoader();
+          loader.setCrossOrigin('anonymous');
+          loader.load(urlCORS, (tex) => {
+            tex.colorSpace = THREE.SRGBColorSpace;
+            const mesh = el.getObject3D('mesh');
+            if (mesh) {
+              mesh.material = new THREE.MeshBasicMaterial({ map: tex, side: THREE.FrontSide });
+              mesh.material.needsUpdate = true;
+            }
+          });
+        }
+      }
+    });
+
+    AFRAME.registerComponent('video-handler', {
+      init: function () {
+        const video = document.querySelector('#video-nebulosa');
+        if (!video) return;
+        const startVideo = () => {
+          if (video.paused) video.play().catch(() => {});
+          window.removeEventListener('click', startVideo);
+        };
+        window.addEventListener('click', startVideo);
+      }
+    });
+  </script>
+</head>
+<body style="margin: 0; overflow: hidden; background-color: #000;">
+
+  <!-- MODAL DE FICHA TÉCNICA Y REFLEXIÓN COMPLETA -->
+  <div id="artwork-modal-overlay" onclick="if(event.target === this) cerrarModalObra()">
+    <div id="artwork-modal">
+      <button id="artwork-modal-close" onclick="cerrarModalObra()" title="Cerrar">✕</button>
+      <span id="artwork-modal-badge">Galería Nebulosa</span>
+      <h2 id="artwork-modal-title">Título de la Obra</h2>
+      <span id="artwork-modal-meta">Categoría</span>
+      <p id="artwork-modal-desc">Descripción...</p>
+      <a id="artwork-modal-link" href="#" target="_blank">Leer reflexión completa de la obra ↗</a>
+    </div>
+  </div>
+
+  <!-- REPRODUCTOR DE VIDEO FLOTANTE -->
+  <div id="video-modal-overlay" onclick="if(event.target === this) cerrarModalVideo()">
+    <div id="video-modal-wrapper">
+      <button id="video-modal-close" onclick="cerrarModalVideo()" title="Cerrar (Esc)">✕</button>
+      <div id="video-modal-container">
+        <iframe id="youtube-player-frame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media" allowfullscreen></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- GUÍA DE NAVEGACIÓN EN PANTALLA -->
+  <div id="nav-guide">
+    <button id="btn-toggle-nav-guide" onclick="alternarNavGuide()" title="Minimizar / Mostrar panel">▶</button>
+    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+      <div class="guide-title">Navegación</div>
+      <button onclick="alternarNavGuide()" style="background: none; border: none; color: #a855f7; cursor: pointer; font-size: 11px;">✕</button>
+    </div>
+    <div class="arrow-pad">
+      <div class="key-cap" onclick="moverConBoton('ArrowUp')">↑</div>
+      <div class="arrow-row">
+        <div class="key-cap" onclick="moverConBoton('ArrowLeft')">←</div>
+        <div class="key-cap" onclick="moverConBoton('ArrowDown')">↓</div>
+        <div class="key-cap" onclick="moverConBoton('ArrowRight')">→</div>
+      </div>
+    </div>
+    <span style="font-size: 10px; color: #9c9cb8;">Flechas o WASD</span>
+    <div style="width: 80%; height: 1px; background: rgba(255,255,255,0.15);"></div>
+    <div class="guide-item">
+      <div class="mouse-icon"></div>
+      <span>Girar 360°<br>(Mouse / Arrastrar)</span>
+    </div>
+    <div style="width: 80%; height: 1px; background: rgba(255,255,255,0.15);"></div>
+    <button id="btn-toggle-nebulosa" onclick="alternarNebulosa()">🌌 Salir a la Nebulosa</button>
+  </div>
+
+  <!-- ESCENA DE A-FRAME -->
+  <a-scene 
+    video-handler
+    loading-screen="enabled: false;"
+    cursor="rayOrigin: mouse;"
+    raycaster="objects: .clickable;"
+    renderer="logarithmicDepthBuffer: true; colorManagement: true; exposure: 1.0; toneMapping: ACESFilmic;">
+
+    <a-assets timeout="100">
+      <!-- Carga el archivo subido al repositorio en la captura de GitHub -->
+      <a-asset-item id="modelo-galeria" src="galería_nueva.glb"></a-asset-item>
+      
+      <!-- Carga el video de fondo subido como Fondo.mp4 en GitHub -->
+      <video id="video-nebulosa" src="Fondo.mp4" autoplay loop muted playsinline crossorigin="anonymous"></video>
+    </a-assets>
+
+    <!-- FONDO DE VIDEO CÓSMICO (FONDO DE LA GALERÍA) -->
+    <a-videosphere src="#video-nebulosa" rotation="0 -90 0"></a-videosphere>
+
+    <!-- ILUMINACIÓN DE LA ESCENA -->
+    <a-entity light="type: ambient; color: #ffffff; intensity: 1.2;"></a-entity>
+    <a-entity light="type: directional; color: #fff1d6; intensity: 1.5;" position="0 15 10"></a-entity>
+
+    <!-- MODELO 3D DE LA GALERÍA COMPLETA -->
+    <a-entity gltf-model="#modelo-galeria" position="0 0 0"></a-entity>
+
+
+    <!-- ========================================================= -->
+    <!-- ESCULTURAS INTERACTIVAS (CON COORDENADAS EXACTAS DE BLENDER) -->
+    <!-- ========================================================= -->
+
+    <!-- ESCULTURA TORSO DE MUJER (Giratoria al hacer clic + Ficha) -->
+    <a-entity id="escultura-torso"
+              escultura-interactiva="titulo: Torso Esculpido; meta: Escultura & Anatomía; desc: Pieza escultórica moldeada en acabado mate sobre su base de soporte.; link: https://galerianebulosa.com/obras-destacadas/"
+              position="-0.88904 -1.4368 2.4677"
+              rotation="0 0 0">
+    </a-entity>
+
+    <!-- PEDESTAL DE SOPORTE -->
+    <a-entity id="pedestal-escultura"
+              position="8.6324 -1.3412 0.56181"
+              rotation="0 0 0">
+    </a-entity>
+
+    <!-- CUBO MORADO DE REFERENCIA -->
+    <a-entity id="cubo-morado-referencia"
+              position="-14.421 -2.2257 0.61366"
+              rotation="0 0 0">
+    </a-entity>
+
+
+    <!-- ========================================================= -->
+    <!-- CUADROS Y OBRAS EXTRAÍDAS DE PÁGINA DE REFLEXIONES.TXT    -->
+    <!-- ========================================================= -->
+
+    <!-- 1. El precio del fuego -->
+    <a-entity id="obra-1-precio-fuego"
+              obra-interactiva="titulo: El precio del fuego (70 × 50 cm); meta: Filosofía & Resistencia; desc: A través del mito de Prometeo encadenado y una marea de calaveras anónimas, esta obra reflexiona sobre el costo de desafiar las estructuras de control.; link: https://galerianebulosa.com/el-precio-de-la-verdad-por-que-incomoda-tanto-quien-decide-pensar-por-si-mismo/"
+              position="-9.86 1.95 -18.11" rotation="0 90 0">
+      <a-box width="2.5" height="1.8" depth="0.08" color="#0e0c18"></a-box>
+      <a-plane position="0 0 0.052" width="2.35" height="1.65" lienzo-obra="src: https://galerianebulosa.com/wp-content/uploads/2026/09/VioletaMichelleCortezSurio_ThePriceOfFire.jpg;"></a-plane>
+    </a-entity>
+
+    <!-- 2. El Relicario de la memoria y la voz -->
+    <a-entity id="obra-2-relicario"
+              obra-interactiva="titulo: El Relicario de la memoria y la voz; meta: Memoria Histórica & Pueblos Originarios; desc: Una mujer indígena con los labios descosidos recupera la voz silenciada por siglos. Porta un relicario de dos caras con Joya de Cerén.; link: https://galerianebulosa.com/raices-indigenas-el-salvador-joya-de-ceren/"
+              position="-9.93 1.95 -20.81" rotation="0 90 0">
+      <a-box width="2.5" height="1.8" depth="0.08" color="#0e0c18"></a-box>
+      <a-plane position="0 0 0.052" width="2.35" height="1.65" lienzo-obra="src: http://galerianebulosa.com/wp-content/uploads/2026/09/VioletaMichelleCortezSurio_ElRelicarioDeLaMemoriaYLaVoz-scaled.jpg;"></a-plane>
+    </a-entity>
+
+    <!-- 3. Fragmentos de una era rota (Premio MARTE) -->
+    <a-entity id="obra-3-fragmentos-marte"
+              obra-interactiva="titulo: Fragmentos de una era rota (Premio Museo MARTE); meta: Conflicto & Sanación Social; desc: Ganadora del Museo MARTE. Da voz a las memorias silenciadas y sitúa en un niño que lee la única fuerza capaz de frenar el ciclo de violencia.; link: https://galerianebulosa.com/cicatrices-conflicto-armado-el-salvador-educacion/"
+              position="-9.94 1.95 -23.51" rotation="0 90 0">
+      <a-box width="2.5" height="1.8" depth="0.08" color="#0e0c18"></a-box>
+      <a-plane position="0 0 0.052" width="2.35" height="1.65" lienzo-obra="src: https://galerianebulosa.com/wp-content/uploads/2025/09/VioletaMichelleCortezSurio_FragmentsOfAShatteredEra.jpg;"></a-plane>
+    </a-entity>
+
+    <!-- 4. Alas de renacimiento -->
+    <a-entity id="obra-4-alas-renacimiento"
+              obra-interactiva="titulo: Alas de renacimiento (40.5 × 30.5 cm); meta: Superación Personal & Duelo; desc: Una golondrina rompe eslabones pesados mientras peces alados celebran en el cielo. Alegoría sobre sanar y recuperar la identidad.; link: https://galerianebulosa.com/galerianebulosa-com-romper-cadenas-invisibles-el-coraje-de-soltar-relaciones-toxicas-y-renacer/"
+              position="-0.16 2.05 -16.99" rotation="0 -90 0">
+      <a-box width="2.5" height="1.8" depth="0.08" color="#0e0c18"></a-box>
+      <a-plane position="0 0 0.052" width="2.35" height="1.65" lienzo-obra="src: https://galerianebulosa.com/wp-content/uploads/2025/09/VioletaMichelleCortezSurio_WingsOfRebirth-1.jpg;"></a-plane>
+    </a-entity>
+
+    <!-- 5. Autorretrato «Mi Felicidad» -->
+    <a-entity id="obra-5-mi-felicidad"
+              obra-interactiva="titulo: Autorretrato «Mi Felicidad»; meta: Música, Pintura & Simbiosis Creativa; desc: Exploración audiovisual sobre la simbiosis entre creador y materia. El lienzo es el confidente que escucha y el arte es el destino final.; link: https://galerianebulosa.com/mi-felicidad-cuando-el-lienzo-se-convierte-en-tu-confidente-y-el-arte-en-tu-hogar/"
+              position="-0.28 2.05 -20.06" rotation="0 -90 0">
+      <a-box width="2.5" height="1.8" depth="0.08" color="#0e0c18"></a-box>
+      <a-plane position="0 0 0.052" width="2.35" height="1.65" lienzo-obra="src: http://galerianebulosa.com/wp-content/uploads/2026/09/Autorretrato-scaled.png;"></a-plane>
+    </a-entity>
+
+    <!-- 6. Al compás de la esclavitud digital -->
+    <a-entity id="obra-6-esclavitud-digital"
+              obra-interactiva="titulo: Al compás de la esclavitud digital (76 × 56 cm); meta: Crítica Social & Algoritmos; desc: Una bailarina encadenada sonríe forzadamente ante una pantalla sosteniendo «Yo elegí esto». Denuncia contra el secuestro de la atención humana.; link: https://galerianebulosa.com/la-trampa-del-algoritmo-como-la-tirania-digital-destruye-la-identidad-y-la-economia/"
+              position="-0.15 2.05 -23.12" rotation="0 -90 0">
+      <a-box width="2.5" height="1.8" depth="0.08" color="#0e0c18"></a-box>
+      <a-plane position="0 0 0.052" width="2.35" height="1.65" lienzo-obra="src: https://galerianebulosa.com/wp-content/uploads/2025/09/VioletaMichelleCortezSurio_ToTheRhythmOfDigitalSlavery.jpg;"></a-plane>
+    </a-entity>
+
+    <!-- 7. Burbuja rota – El despertar del fénix -->
+    <a-entity id="obra-7-burbuja-rota"
+              obra-interactiva="titulo: Burbuja rota – El despertar del fénix (61 × 45.5 cm); meta: Crecimiento Interior & Miedos; desc: Una criatura de fuego revienta la membrana de creencias limitantes y miedos autoimpuestos para expandirse hacia su verdadera dimensión.; link: https://galerianebulosa.com/el-despertar-del-fenix-como-reventar-la-zona-de-confort-que-te-mantiene-atrapado/"
+              position="-8.00 2.03 -25.02" rotation="0 0 0">
+      <a-box width="2.5" height="1.8" depth="0.08" color="#0e0c18"></a-box>
+      <a-plane position="0 0 0.052" width="2.35" height="1.65" lienzo-obra="src: https://galerianebulosa.com/wp-content/uploads/2026/09/Burbuja-rota-El-despertar-del-fenix-scaled.jpg;"></a-plane>
+    </a-entity>
+
+    <!-- 8. El juicio del dragón azul -->
+    <a-entity id="obra-8-dragon-azul"
+              obra-interactiva="titulo: El juicio del dragón azul (60 × 80 cm); meta: Naturaleza & Conciencia Cósmica; desc: Un dragón celestial es observado por los animales del bosque. Alegoría sobre la desconexión humana con lo salvaje y la crisis ecológica.; link: https://galerianebulosa.com/el-juicio-del-dragon-azul-estamos-en-guerra-con-las-fuerzas-naturales-que-nos-sustentan/"
+              position="-4.94 2.05 -24.89" rotation="0 0 0">
+      <a-box width="2.5" height="1.8" depth="0.08" color="#0e0c18"></a-box>
+      <a-plane position="0 0 0.052" width="2.35" height="1.65" lienzo-obra="src: https://galerianebulosa.com/wp-content/uploads/2025/09/VioletaMichelleCortezSurio_TheJudgmentOfTheBlueDragon.png;"></a-plane>
+    </a-entity>
+
+    <!-- 9. Ecos en el tiempo -->
+    <a-entity id="obra-9-ecos-tiempo"
+              obra-interactiva="titulo: Ecos en el tiempo (60 × 80 cm); meta: Física Cuántica & Nostalgia; desc: Un reloj fragmentado y una entidad tecnológica confrontan la relatividad temporal: cómo los anhelos y recuerdos dilatan o congelan la vida.; link: https://galerianebulosa.com/ecos-en-el-tiempo-por-que-el-pasado-y-el-futuro-conviven-en-tus-recuerdos/"
+              position="-1.88 2.06 -24.78" rotation="0 0 0">
+      <a-box width="2.5" height="1.8" depth="0.08" color="#0e0c18"></a-box>
+      <a-plane position="0 0 0.052" width="2.35" height="1.65" lienzo-obra="src: https://galerianebulosa.com/wp-content/uploads/2026/09/Ecos-en-el-tiempo_Violeta-Michelle-Cortez-Surio.png;"></a-plane>
+    </a-entity>
+
+    <!-- 10. Desnúdate el alma -->
+    <a-entity id="obra-10-desnudate-alma"
+              obra-interactiva="titulo: Desnúdate el alma; meta: Autoconocimiento & Esencia; desc: Nacida a partir de un poema fundacional de la artista, la figura femenina que flota despoja máscaras y ataduras del ego.; link: https://galerianebulosa.com/desnudarse-el-alma-el-dificil-arte-de-vivir-sin-falsas-apariencias-ni-corazas/"
+              position="1.55 2.05 -14.98" rotation="0 0 0">
+      <a-box width="2.5" height="1.8" depth="0.08" color="#0e0c18"></a-box>
+      <a-plane position="0 0 0.052" width="2.35" height="1.65" lienzo-obra="src: https://galerianebulosa.com/wp-content/uploads/2026/09/VioletaMichelleCortezSurio_UndressTheSoul.png;"></a-plane>
+    </a-entity>
+
+    <!-- 11. El retrato del poder -->
+    <a-entity id="obra-11-retrato-poder"
+              obra-interactiva="titulo: El retrato del poder; meta: Sociología & Dinero; desc: Entre lingotes de oro y billetes flotantes, expone la soledad de las oligarquías y la ceguera emocional frente a las realidades del entorno.; link: https://galerianebulosa.com/el-vacio-de-la-opulencia-cuando-el-dinero-compra-privilegios-pero-apaga-la-empatia/"
+              position="4.32 2.05 -15.02" rotation="0 0 0">
+      <a-box width="2.5" height="1.8" depth="0.08" color="#0e0c18"></a-box>
+      <a-plane position="0 0 0.052" width="2.35" height="1.65" lienzo-obra="src: https://galerianebulosa.com/wp-content/uploads/2026/09/El-retrato-del-poder.png;"></a-plane>
+    </a-entity>
+
+    <!-- 12. Sombras iluminadas -->
+    <a-entity id="obra-12-sombras-iluminadas"
+              obra-interactiva="titulo: Sombras iluminadas (40.5 × 30.5 cm); meta: Esperanza & Serenidad; desc: En medio de nubarrones turbulentos, la luna irradia un brillo silencioso. Recordatorio de que la esperanza es una chispa serena.; link: https://galerianebulosa.com/sombras-iluminadas-por-que-la-luz-mas-pequena-es-suficiente-para-vencer-a-la-noche/"
+              position="7.14 2.05 -15.02" rotation="0 0 0">
+      <a-box width="2.5" height="1.8" depth="0.08" color="#0e0c18"></a-box>
+      <a-plane position="0 0 0.052" width="2.35" height="1.65" lienzo-obra="src: https://galerianebulosa.com/wp-content/uploads/2026/09/arte-de-nubes-con-luna-scaled.png;"></a-plane>
+    </a-entity>
+
+    <!-- 13. Umbral de esperanza -->
+    <a-entity id="obra-13-umbral-esperanza"
+              obra-interactiva="titulo: Umbral de esperanza (60 × 80 cm); meta: Existencialismo & Cosmos; desc: La figura en traje formal contrasta con las nebulosas infinitas. Un dilema entre la rutina y cultivar sueños que trasciendan el tiempo.; link: https://galerianebulosa.com/que-legado-dejamos-frente-a-la-inmensidad-del-cosmos/"
+              position="9.93 2.05 -14.90" rotation="0 0 0">
+      <a-box width="2.5" height="1.8" depth="0.08" color="#0e0c18"></a-box>
+      <a-plane position="0 0 0.052" width="2.35" height="1.65" lienzo-obra="src: https://galerianebulosa.com/wp-content/uploads/2026/09/Umbral-de-esperanza.png;"></a-plane>
+    </a-entity>
+
+    <!-- 14. Guardián de la patria -->
+    <a-entity id="obra-14-guardian-patria"
+              obra-interactiva="titulo: Guardián de la patria (40.5 × 30.5 cm); meta: Identidad & Soberanía; desc: El ave Torogoz surca los cielos con el lazo azul y blanco junto al monumento del Salvador del Mundo. Visión de naturaleza, fe y patria.; link: https://galerianebulosa.com/el-vuelo-del-torogoz-fe-libertad-y-el-renacer-de-la-esperanza-en-el-salvador/"
+              position="12.77 2.05 -14.92" rotation="0 0 0">
+      <a-box width="2.5" height="1.8" depth="0.08" color="#0e0c18"></a-box>
+      <a-plane position="0 0 0.052" width="2.35" height="1.65" lienzo-obra="src: https://galerianebulosa.com/wp-content/uploads/2026/09/Guardian-de-la-patria-scaled.png;"></a-plane>
+    </a-entity>
+
+    <!-- 15. Obra pintada con café salvadoreño -->
+    <a-entity id="obra-15-pintura-cafe"
+              obra-interactiva="titulo: Obra de El Salvador (50 × 34.6 cm); meta: Cultura Popular & Café Salvadoreño; desc: Pigmentos extraídos del grano de café de altura integrando al Mágico González, El Cipitío y los volcanes en una oda viva.; link: https://galerianebulosa.com/entre-la-magia-y-el-cafe-magico-gonzalez-el-cipitio-y-la-esencia-de-nuestra-tierra/"
+              position="15.60 2.05 -14.91" rotation="0 0 0">
+      <a-box width="2.5" height="1.8" depth="0.08" color="#0e0c18"></a-box>
+      <a-plane position="0 0 0.052" width="2.35" height="1.65" lienzo-obra="src: https://galerianebulosa.com/wp-content/uploads/2026/09/Cuadro-salvadoreno.png;"></a-plane>
+    </a-entity>
+
+    <!-- 16. El aliento del mar (Poseidón) -->
+    <a-entity id="obra-16-poseidon"
+              obra-interactiva="titulo: El aliento del mar (Poseidón); meta: Mitología Clásica & Cátedra UTEC; desc: Lápices de sanguina, sepia y tiza blanca capturando la mirada indomable del soberano de los océanos, cuyas olas y barba se funden.; link: https://galerianebulosa.com/que-oculta-la-mirada-de-poseidon-el-secreto-mitologico-detras-de-este-dibujo-en-sepia-y-sanguina/"
+              position="18.33 2.05 -14.85" rotation="0 0 0">
+      <a-box width="2.5" height="1.8" depth="0.08" color="#0e0c18"></a-box>
+      <a-plane position="0 0 0.052" width="2.35" height="1.65" lienzo-obra="src: http://galerianebulosa.com/wp-content/uploads/2026/09/El-aliento-del-mar-1.jpg;"></a-plane>
+    </a-entity>
+
+
+    <!-- ========================================================= -->
+    <!-- CÁMARA Y NAVEGACIÓN DENTRO DE LA GALERÍA                  -->
+    <!-- ========================================================= -->
+    <a-entity id="rig" 
+              movement-controls="controls: keyboard; speed: 0.35;" 
+              position="-14.421 2.05 0.613" 
+              rotation="0 90 0">
+      <a-camera position="0 0 0" 
+                wasd-controls="enabled: false;" 
+                look-controls="pointerLockEnabled: false; touchEnabled: true;">
+      </a-camera>
+    </a-entity>
+
+  </a-scene>
+
+</body>
+</html>
