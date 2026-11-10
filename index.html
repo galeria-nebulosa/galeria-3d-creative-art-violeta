@@ -434,7 +434,7 @@
       }
     }
 
-    // BASE DE DATOS DE OBRAS VINCULADA A LOS NOMBRES DE LAS COLECCIONES EN BLENDER
+    // BASE DE DATOS DE OBRAS VINCULADA A LOS NOMBRES DE LAS COLECCIONES EN BLENDER (CON URLs RAW DE GITHUB Y AJUSTE DE PROPORCIÓN)
     const MAPA_OBRAS = {
       'Al compás de la esclavitud digital': {
         titulo: 'Al compás de la esclavitud digital (76 × 56 cm)',
@@ -593,14 +593,14 @@
 
             const datosObra = MAPA_OBRAS[nombreObraEncontrada];
             if (datosObra && datosObra.img) {
-              const urlCORS = 'https://images.weserv.nl/?url=' + encodeURIComponent(datosObra.img);
               const loader = new THREE.TextureLoader();
               loader.setCrossOrigin('anonymous');
-              loader.load(urlCORS, (tex) => {
+              loader.load(datosObra.img, (tex) => {
                 tex.colorSpace = THREE.SRGBColorSpace;
-                // Corrección automática de orientación (espejo/inversión) para que ninguna imagen salga al revés
+                // Corrección de proporción y orientación simétrica para que no se deforme al caminar a los lados
                 tex.wrapS = THREE.RepeatWrapping;
-                tex.repeat.x = -1;
+                tex.wrapT = THREE.RepeatWrapping;
+                tex.repeat.set(-1, 1);
                 
                 child.material = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
                 child.material.needsUpdate = true;
